@@ -1,0 +1,62 @@
+import os
+import time
+import requests
+import pandas as pd
+
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+API = "https://api.binance.com/api/v3/klines"
+last_signal = None
+
+def send_message(message):
+    if not TOKEN or not CHAT_ID:
+        print("Configure les variables Telegram.")
+        return
+    requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+        data={"chat_id": CHAT_ID, "text": message},
+        timeout=15
+    ).raise_for_status()
+
+def check_market():
+    global last_signal
+    response = requests.get(
+        API,
+        params={"symbol": "BTCUSDT", "interval": "5m", "limit": 100},
+        timeout=15
+    )
+    response.raise_for_status()
+    candles = response.json()
+    df = pd.DataFrame(candles, columns=[
+        "time", "open", "high", "low", "close", "volume",
+        "close_time", "quote_volume", "trades",
+        "taker_base", "taker_quote", "ignore"
+    ])
+    df["close"] = pd.to_numeric(df["close"])
+    df = df.iloc[:-1].copy()
+    df["ema9"] = df["close"].ewm(span=9, adjust=False).mean()
+    df["ema21"] = df["close"].ewm(span=21, adjust=False).mean()
+    df["ema50"] = df["close"].ewm(span=50, adjust=False).mean()
+
+    previous, current = df.iloc[-2], df.iloc[-1]
+    signal = None
+
+    if previous.ema9 <= previous.ema21 and current.ema9 > current.ema21 and current.close > current.ema50:
+        signal = "ACHAT"
+    elif previous.ema9 >= previous.ema21 and current.ema9 < current.ema21 and current.close < current.ema50:
+        signal = "VENTE"
+
+    if signal and signal != last_signal:
+        send_message(
+            f"🔔 Signal BTC/USDT : {signal}\n"
+            f"Prix indicatif Binance : {current.close:.2f} USDT\n"
+            "⚠️ Signal expérimental, à vérifier avant toute décision."
+        )
+        last_signal = signal
+
+while True:
+    try:
+        check_market()
+    except Exception as error:
+        print("Erreur :", error)
+    time.sleep(60)
