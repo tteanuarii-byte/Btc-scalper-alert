@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>BTC Trader Pro</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#eef2ff;font-family:Arial,sans-serif;padding:20px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.logo{font-size:22px;font-weight:800;color:#f5b942}
+small,.muted{color:#98a3bd}
+.pill{background:#202b40;border-radius:20px;padding:8px 12px;font-size:12px}
+h1{font-size:25px;margin-bottom:8px}
+h2{font-size:17px;margin-top:0}
+.card{background:#141d30;border:1px solid #26334a;border-radius:16px;padding:18px;margin:14px 0}
+.price{font-size:30px;font-weight:bold;margin:12px 0}
+.notice{font-size:12px;color:#f5c76b;line-height:1.5}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+button,select,input{font-size:14px;border-radius:10px;padding:11px;background:#202b40;color:#fff;border:1px solid #35445f}
+button{cursor:pointer}
+button.active{background:#f5b942;color:#101522;border-color:#f5b942;font-weight:bold}
+label{display:block;margin:15px 0 7px;color:#b9c4da;font-size:13px}
+select,input{width:100%}
+.primary{width:100%;margin-top:16px;background:#f5b942;color:#111827;font-weight:bold;border:0}
+.stat{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #26334a}
+footer{text-align:center;color:#75819b;font-size:12px;padding:20px 0}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">₿ BTC Trader Pro</div>
+  <div class="pill">● Mode démo</div>
+</header>
+
+<h1>Ton tableau de bord</h1>
+<p class="muted">Surveille les marchés et prépare tes alertes.</p>
+
+<div class="card">
+  <h2>Connexion au marché</h2>
+  <div class="pill">Non connecté à Vantage MT5</div>
+  <p class="notice">Les prix réels apparaîtront après la mise en place d’une connexion de données. Aucun prix affiché ici n’est présenté comme un cours en direct.</p>
+</div>
+
+<div class="card">
+  <h2>Marchés</h2>
+  <div class="tabs" id="tabs">
+    <button class="active" data-market="Crypto">Crypto</button>
+    <button data-market="Forex">Forex</button>
+    <button data-market="Métaux">Métaux</button>
+    <button data-market="Indices">Indices</button>
+    <button data-market="CFD">CFD</button>
+  </div>
+  <label for="symbol">Instrument</label>
+  <select id="symbol">
+    <option>BTCUSD</option>
+    <option>ETHUSD</option>
+  </select>
+  <div class="stat"><span>Marché sélectionné</span><strong id="marketName">Crypto</strong></div>
+  <div class="stat"><span>État des données</span><strong>Démo</strong></div>
+</div>
+
+<div class="card">
+  <h2>Paramètres des alertes</h2>
+  <label for="strategy">Stratégie</label>
+  <select id="strategy">
+    <option>Suivi de tendance</option>
+    <option>Croisement de moyennes mobiles</option>
+    <option>RSI — surachat / survente</option>
+    <option>Scalping — à configurer</option>
+  </select>
+  <label for="timeframe">Unité de temps</label>
+  <select id="timeframe">
+    <option>M5 — 5 minutes</option>
+    <option>M15 — 15 minutes</option>
+    <option>M30 — 30 minutes</option>
+    <option>H1 — 1 heure</option>
+    <option>H4 — 4 heures</option>
+    <option>D1 — 1 jour</option>
+  </select>
+  <label for="risk">Risque maximum souhaité (%)</label>
+  <input id="risk" type="number" min="0.1" max="5" step="0.1" value="1">
+  <label for="alerts">Alertes</label>
+  <select id="alerts">
+    <option>Signaux d'achat et de vente</option>
+    <option>Signaux d'achat seulement</option>
+    <option>Signaux de vente seulement</option>
+  </select>
+  <button class="primary" id="save">Enregistrer mes préférences</button>
+  <p id="message" class="notice" aria-live="polite"></p>
+</div>
+
+<div class="card">
+  <h2>Protection</h2>
+  <div class="stat"><span>Ordres automatiques</span><strong>Désactivés</strong></div>
+  <div class="stat"><span>Compte</span><strong>Démo uniquement</strong></div>
+  <p class="muted">Cette interface ne passe aucun ordre et ne remplace pas la configuration du robot sur MT5.</p>
+</div>
+<footer>BTC Trader Pro · Interface de démonstration</footer>
+
+<script>
+const instruments={
+ Crypto:["BTCUSD","ETHUSD","XRPUSD","LTCUSD"],
+ Forex:["EURUSD","GBPUSD","USDJPY","AUDUSD","USDCAD"],
+ Métaux:["XAUUSD","XAGUSD"],
+ Indices:["US30","NAS100","SPX500","GER40"],
+ CFD:["USOIL","UKOIL"]
+};
+const tabs=document.querySelectorAll("#tabs button");
+const symbol=document.getElementById("symbol");
+const marketName=document.getElementById("marketName");
+tabs.forEach(btn=>btn.addEventListener("click",()=>{
+ tabs.forEach(b=>b.classList.remove("active"));
+ btn.classList.add("active");
+ const market=btn.dataset.market;
+ marketName.textContent=market;
+ symbol.innerHTML="";
+ instruments[market].forEach(item=>{
+  const option=document.createElement("option");
+  option.textContent=item;
+  symbol.appendChild(option);
+ });
+}));
+document.getElementById("save").addEventListener("click",()=>{
+ document.getElementById("message").textContent=
+ "Préférences affichées pour "+symbol.value+". Elles ne sont pas encore reliées au robot MT5.";
+});
+</script>
+</body>
+</html>
